@@ -1,0 +1,20 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t sgk/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true -t sgk/react-test npm test
+
+after_success:
+  - docker build -e CI=true  -t sgk/multi-client ./client
+  - docker build -e CI=true  -t sgk/multi-nginx ./nginx
+  - docker build -e CI=true  -t sgk/multi-server ./server
+  - docker build -e CI=true  -t sgk/multi-worker ./worker
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  - docker push sgk/multi-client
+  - docker push sgk/multi-nginx
+  - docker push sgk/multi-server
+  - docker push sgk/multi-worker
